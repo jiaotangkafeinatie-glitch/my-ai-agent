@@ -8,3 +8,5 @@ langchain-community
 duckduckgo-search
 protobuf==3.20.3
 opencv-python-headless
+ddgs  # 💡 补丁1：搜索功能的核心零件
+curl_cffi  # 💡 补丁2：模拟浏览器，防止被搜索引擎拦截
