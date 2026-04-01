@@ -6,3 +6,4 @@ rapidocr-onnxruntime
 langchain-openai
 langchain-community
 duckduckgo-search
+protobuf==4.25.3
