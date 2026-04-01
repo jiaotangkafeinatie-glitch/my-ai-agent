@@ -86,7 +86,7 @@ with st.sidebar:
                     os.remove(temp_p)
                 
                 if raw_text.strip():
-                    from langchain.text_splitter import RecursiveCharacterTextSplitter
+                    from langchain_text_splitters import RecursiveCharacterTextSplitter
                     text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
                     chunks = text_splitter.split_text(raw_text)
                     ids = [f"{file_name}_{i}" for i in range(len(chunks))]
