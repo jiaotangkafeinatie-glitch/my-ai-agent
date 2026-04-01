@@ -7,217 +7,165 @@ import os
 import json
 from langchain_openai import ChatOpenAI
 from langchain_community.tools import DuckDuckGoSearchRun
+from streamlit.runtime.scriptrunner import get_script_run_ctx
 
-# ================= 1. 核心系统加载 =================
+# ================= 1. 用户隔离逻辑 =================
+def get_user_id():
+    ctx = get_script_run_ctx()
+    return ctx.session_id if ctx else "default_user"
+
+USER_ID = get_user_id()
+USER_DIR = f"storage/{USER_ID}"
+DB_PATH = f"{USER_DIR}/vector_db"
+HISTORY_PATH = f"{USER_DIR}/chat_history.json"
+
+os.makedirs(DB_PATH, exist_ok=True)
+
+# ================= 2. 系统核心加载 =================
 @st.cache_resource
-def load_core_systems():
-    # 秘密钥匙读取
-    DEEPSEEK_KEY = st.secrets["DEEPSEEK_KEY"]
-    
-    # 向量库与模型
-    client = chromadb.PersistentClient(path="./my_vector_db")
-    collection = client.get_or_create_collection(name="my_docs")
+def load_global_assets():
     embed_model = SentenceTransformer('all-MiniLM-L6-v2')
-    
-    # OCR 与 LLM
     ocr_engine = RapidOCR()
+    return embed_model, ocr_engine
+
+embed_model, ocr_engine = load_global_assets()
+
+def get_user_session():
+    client = chromadb.PersistentClient(path=DB_PATH)
+    collection = client.get_or_create_collection(name="user_docs")
+    DEEPSEEK_KEY = st.secrets["DEEPSEEK_KEY"]
     llm = ChatOpenAI(
         model='deepseek-chat', 
         openai_api_key=DEEPSEEK_KEY, 
         openai_api_base='https://api.deepseek.com/v1',
         streaming=True
     )
-    return collection, embed_model, ocr_engine, llm
+    return collection, llm
 
-collection, embed_model, ocr_engine, llm = load_core_systems()
+collection, llm = get_user_session()
 
-# ================= 2. 功能函数库 =================
-def extract_text_from_txt(file_bytes):
-    return file_bytes.decode("utf-8")
-
-def extract_text_with_ocr(pdf_path):
-    doc = fitz.open(pdf_path)
-    full_text = ""
-    for page in doc:
-        img_list = page.get_images()
-        if img_list:
-            pix = page.get_pixmap()
-            img_path = f"temp_page.png"
-            pix.save(img_path)
-            result, _ = ocr_engine(img_path)
-            if result:
-                full_text += "\n".join([line[1] for line in result])
-            os.remove(img_path)
-        else:
-            full_text += page.get_text()
-    return full_text
-
-def split_text(text, chunk_size=500):
-    return [text[i:i+chunk_size] for i in range(0, len(text), chunk_size)]
-
-def save_chat_history(messages):
-    with open("chat_history.json", "w", encoding="utf-8") as f:
-        json.dump(messages, f, ensure_ascii=False, indent=4)
-
-def load_chat_history():
-    if os.path.exists("chat_history.json"):
-        with open("chat_history.json", "r", encoding="utf-8") as f:
-            return json.load(f)
-    return []
-
-# ================= 3. 左侧边栏：管理中心 =================
+# ================= 3. 侧边栏：管理与介绍 =================
 with st.sidebar:
-    st.title("📂 知识库管理")
+    st.title("📂 个人私有知识库")
     
-    # --- 模块 A：使用指南 (放在侧边栏最上方) ---
-    # --- 模块 A：使用指南 (深度增强版) ---
-    with st.expander("🚀 快速上手：特工操作指南", expanded=True):
-        st.markdown("""
-        ### 1️⃣ 第一步：喂养 AI (入库)
-        - 在下方选择 **TXT** 或 **PDF** 文件。
-        - 点击 **[🚀 开始解析]**。
-        - *💡 即使是图片格式的 PDF，我也能通过 OCR 视觉引擎读懂它。*
-
-        ### 2️⃣ 第二步：精准定位 (筛选)
-        - 在主界面中间的下拉菜单中选择你要聊的 **具体文件名**。
-        - 选“全选”则会在所有已存文档中寻找答案。
-
-        ### 3️⃣ 第三步：提问与溯源
-        - **本地回答**：我会优先从你的文档里找答案，并提供 **[📚 溯源原文]** 供你核对。
-        - **自动联网**：如果文档里没写，我会自动切换到 **[🌐 全网搜索]** 模式为你寻找最新资讯。
-
-        ### 4️⃣ 第四步：记忆管理
-        - 觉得我回答得不对？在左侧 **[✂️ 记忆清理]** 选择该条对话并删除，防止我被错误信息误导。
+    # --- ✨ 详细的操作指南模块 ---
+    with st.expander("📖 首次使用必看：操作说明", expanded=True):
+        st.markdown(f"""
+        **您的专属 ID:** `{USER_ID[:8]}`
+        
+        ### 🚀 快速上手
+        1. **喂养 AI**：在下方上传 **TXT/PDF**，点击 **[存入我的库]**。
+        2. **独立空间**：您的文件和对话都存在您的专属路径下，其他用户**完全不可见**。
+        3. **精准对谈**：在主页面选择具体文件，AI 会优先从该文件中寻找答案。
+        4. **溯源/联网**：
+            - 📚 匹配成功：显示原文供核对。
+            - 🌐 匹配失败：自动启动全网搜索补充知识。
         
         ---
-        **⚠️ 注意：** 云端环境为临时存储，重要文档请在本地备份。
+        *注：免费服务器若长时间无人访问可能会重置，重要资料请在本地留存。*
         """)
 
     st.divider()
 
-    # --- 模块 B：上传与解析 ---
-    uploaded_file = st.file_uploader("支持 TXT 和 PDF", type=['txt', 'pdf'])
-    if st.button("🚀 开始解析并存入知识库"):
+    # 文件上传
+    uploaded_file = st.file_uploader("📤 上传新文档", type=['txt', 'pdf'])
+    if st.button("🚀 存入我的库"):
         if uploaded_file:
             file_name = uploaded_file.name
             with st.spinner(f'正在解析 {file_name}...'):
                 raw_text = ""
                 if file_name.lower().endswith(".txt"):
-                    raw_text = extract_text_from_txt(uploaded_file.getvalue())
-                elif file_name.lower().endswith(".pdf"):
-                    temp_pdf_path = f"temp_{file_name}"
-                    with open(temp_pdf_path, "wb") as f:
+                    raw_text = uploaded_file.getvalue().decode("utf-8")
+                else:
+                    temp_p = f"{USER_DIR}/temp_{file_name}"
+                    with open(temp_p, "wb") as f:
                         f.write(uploaded_file.getvalue())
-                    raw_text = extract_text_with_ocr(temp_pdf_path)
-                    os.remove(temp_pdf_path)
+                    doc = fitz.open(temp_p)
+                    for page in doc:
+                        raw_text += page.get_text()
+                    os.remove(temp_p)
                 
                 if raw_text.strip():
-                    documents = split_text(raw_text)
-                    ids = [f"{file_name}_{i}" for i in range(len(documents))]
-                    metadatas = [{"source": file_name} for _ in range(len(documents))]
-                    embeddings = embed_model.encode(documents).tolist()
-                    collection.upsert(embeddings=embeddings, documents=documents, metadatas=metadatas, ids=ids)
-                    st.success(f"✅ {file_name} 已入库")
+                    from langchain.text_splitter import RecursiveCharacterTextSplitter
+                    text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
+                    chunks = text_splitter.split_text(raw_text)
+                    ids = [f"{file_name}_{i}" for i in range(len(chunks))]
+                    metas = [{"source": file_name} for _ in range(len(chunks))]
+                    embs = embed_model.encode(chunks).tolist()
+                    collection.upsert(embeddings=embs, documents=chunks, metadatas=metas, ids=ids)
+                    st.success(f"✅ {file_name} 已就绪")
                     st.rerun()
-        else:
-            st.warning("请先选择文件")
 
-    st.divider()
+    # 文件清理
+    db_res = collection.get(include=["metadatas"])
+    my_files = list(set([m["source"] for m in db_res["metadatas"] if m])) if db_res["metadatas"] else []
     
-    # --- 模块 C：文件删除 ---
-    try:
-        db_data = collection.get(include=["metadatas"])
-        all_sources = list(set([meta["source"] for meta in db_data["metadatas"] if meta]))
-    except:
-        all_sources = []
-
-    if all_sources:
-        st.subheader("⚠️ 文件清理")
-        file_to_del = st.selectbox("选择要删除的文件：", all_sources)
-        if st.button("🗑️ 确认从库中永久删除"):
-            collection.delete(where={"source": file_to_del})
-            st.warning(f"已删除：{file_to_del}")
+    if my_files:
+        st.divider()
+        st.subheader("🗑️ 库文件清理")
+        to_del = st.selectbox("选择要删除的文件：", my_files)
+        if st.button("从我的库中永久移除"):
+            collection.delete(where={"source": to_del})
             st.rerun()
 
-    st.divider()
-    
-    # --- 模块 D：记忆清理 ---
-    st.subheader("✂️ 记忆清理")
-    if "messages" in st.session_state and st.session_state.messages:
-        user_queries = []
-        for i, msg in enumerate(st.session_state.messages):
-            if msg["role"] == "user":
-                display_text = f"问: {msg['content'][:15]}..."
-                user_queries.append((i, display_text))
-                
-        if user_queries:
-            query_options = {text: idx for idx, text in user_queries}
-            selected_query = st.selectbox("选择要剔除的对话：", list(query_options.keys()))
-            if st.button("🔪 仅删除选中对话框"):
-                idx = query_options[selected_query]
-                st.session_state.messages.pop(idx)
-                if idx < len(st.session_state.messages) and st.session_state.messages[idx]["role"] == "assistant":
-                    st.session_state.messages.pop(idx)
-                save_chat_history(st.session_state.messages)
-                st.rerun()
-
-    if st.button("🧼 清空所有聊天记录"):
+    if st.button("🧼 清空当前聊天记录"):
+        if os.path.exists(HISTORY_PATH):
+            os.remove(HISTORY_PATH)
         st.session_state.messages = []
-        save_chat_history([])
         st.rerun()
 
-# ================= 4. 右侧主页面：对话中心 =================
-st.title("🤖 私人知识库 & 智能特工")
+# ================= 4. 对话中心 =================
+st.title("🤖 个人私密 AI 特工")
 
 if "messages" not in st.session_state:
-    st.session_state.messages = load_chat_history()
+    if os.path.exists(HISTORY_PATH):
+        with open(HISTORY_PATH, "r", encoding="utf-8") as f:
+            st.session_state.messages = json.load(f)
+    else:
+        st.session_state.messages = []
 
 # 筛选器
-selected_doc = st.selectbox("🎯 请选择要针对哪个文档进行提问：", ["全选"] + all_sources)
+target_doc = st.selectbox("🎯 针对哪个文档提问？", ["全选"] + my_files)
 
-# 渲染历史
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# 历史渲染
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
 
-# 提问逻辑
-if prompt := st.chat_input(f"向 {selected_doc} 提问..."):
+# 交互逻辑
+if prompt := st.chat_input("向我的特工提问..."):
     st.session_state.messages.append({"role": "user", "content": prompt})
     with st.chat_message("user"):
         st.markdown(prompt)
 
     with st.chat_message("assistant"):
-        # 1. 向量搜索
-        q_emb = embed_model.encode([prompt]).tolist()
-        search_filter = {"source": selected_doc} if selected_doc != "全选" else None
-        results = collection.query(query_embeddings=q_emb, n_results=3, where=search_filter)
+        # 搜索与过滤
+        search_filter = {"source": target_doc} if target_doc != "全选" else None
+        res = collection.query(
+            query_embeddings=embed_model.encode([prompt]).tolist(),
+            n_results=3,
+            where=search_filter
+        )
+        context = "\n".join(res['documents'][0]) if res['documents'] and res['documents'][0] else ""
         
-        context = "\n".join(results['documents'][0]) if results['documents'] else ""
-        
-        # 2. 策略判断与回答
-        response_content = ""
+        response = ""
         placeholder = st.empty()
         
         if not context.strip():
-            st.warning("🕵️‍♂️ 本地无答案，正在联网搜索...")
-            search_tool = DuckDuckGoSearchRun()
-            context = search_tool.run(prompt)
-            final_prompt = f"用户问题：{prompt}\n\n联网搜索结果：{context}\n\n请根据搜索结果回答。"
+            st.warning("🕵️‍♂️ 本地无答案，正在全网搜索最新资料...")
+            search_content = DuckDuckGoSearchRun().run(prompt)
+            final_prompt = f"资料：{search_content}\n问题：{prompt}\n回答："
         else:
-            with st.expander("📚 溯源原文（已匹配本地知识库）"):
+            with st.expander("📚 个人库溯源"):
                 st.write(context)
-            final_prompt = f"本地知识库内容：{context}\n\n用户提问：{prompt}\n\n请基于库内容回答。"
+            final_prompt = f"资料：{context}\n问题：{prompt}\n回答："
 
         for chunk in llm.stream(final_prompt):
-            response_content += chunk.content
-            placeholder.markdown(response_content + "▌")
+            response += chunk.content
+            placeholder.markdown(response + "▌")
         
-        placeholder.markdown(response_content)
-        st.session_state.messages.append({"role": "assistant", "content": response_content})
-        save_chat_history(st.session_state.messages)
-        
-        with st.expander(f"🔍 溯源原文 ({source_label})"):
-            st.write(final_context)
-    
-    st.session_state.messages.append({"role": "assistant", "content": ai_response})
-    save_chat_history(st.session_state.messages)
+        placeholder.markdown(response)
+        st.session_state.messages.append({"role": "assistant", "content": response})
+        # 实时保存历史
+        with open(HISTORY_PATH, "w", encoding="utf-8") as f:
+            json.dump(st.session_state.messages, f, ensure_ascii=False, indent=4)
