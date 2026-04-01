@@ -7,3 +7,4 @@ langchain-openai
 langchain-community
 duckduckgo-search
 protobuf==3.20.3
+opencv-python-headless
