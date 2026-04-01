@@ -1,0 +1,8 @@
+streamlit
+chromadb
+sentence-transformers
+pymupdf
+rapidocr-onnxruntime
+langchain-openai
+langchain-community
+duckduckgo-search
