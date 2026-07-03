@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KORA — 你在中国本地的懂行好友 | 城市探索指南</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺</text></svg>">
+<style>
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    color: #1a1a2e;
+    background: #faf8f5;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* ===== Hero ===== */
+  .hero {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+    padding: 80px 24px;
+    background: linear-gradient(180deg, #fff9f0 0%, #faf8f5 100%);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero-bg-pattern {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: radial-gradient(circle at 20% 30%, rgba(255,107,53,0.04) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 60%, rgba(255,184,77,0.04) 0%, transparent 50%),
+                      radial-gradient(circle at 50% 80%, rgba(255,107,53,0.03) 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: #fff;
+    border: 1px solid #f0e6d8;
+    color: #e07b4c;
+    padding: 8px 18px;
+    border-radius: 50px;
+    font-size: 14px;
+    margin-bottom: 28px;
+    position: relative;
+    z-index: 1;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  }
+  .hero-badge .emoji { font-size: 18px; }
+
+  .hero h1 {
+    font-size: clamp(44px, 8vw, 72px);
+    font-weight: 800;
+    color: #2d1f14;
+    line-height: 1.2;
+    margin-bottom: 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .hero h1 .accent {
+    color: #e07b4c;
+    position: relative;
+  }
+  .hero h1 .accent::after {
+    content: '';
+    position: absolute;
+    bottom: 4px; left: 0; right: 0;
+    height: 10px;
+    background: rgba(255,184,77,0.3);
+    border-radius: 4px;
+    z-index: -1;
+  }
+
+  .hero p.hero-subtitle {
+    font-size: clamp(16px, 3vw, 19px);
+    color: #8b7355;
+    max-width: 620px;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+  }
+  .hero p.hero-note {
+    font-size: 14px;
+    color: #b8a590;
+    max-width: 560px;
+    margin-bottom: 36px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hero-buttons {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    justify-content: center;
+    position: relative;
+    z-index: 1;
+  }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 15px 30px;
+    border-radius: 50px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: all 0.25s;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background: #e07b4c;
+    color: #fff;
+    box-shadow: 0 4px 16px rgba(224, 123, 76, 0.3);
+  }
+  .btn-primary:hover {
+    background: #c96a3f;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px rgba(224, 123, 76, 0.4);
+  }
+  .btn-outline {
+    background: #fff;
+    color: #5c3d2e;
+    border: 1.5px solid #e0d5c5;
+  }
+  .btn-outline:hover {
+    border-color: #d0b896;
+    background: #fdfaf5;
+  }
+
+  .hero-scroll {
+    margin-top: 80px;
+    font-size: 13px;
+    color: #c4b393;
+    position: relative;
+    z-index: 1;
+    animation: bounce 2s ease-in-out infinite;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(8px); }
+  }
+
+  /* ===== Layout ===== */
+  .container { max-width: 1000px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 90px 0; }
+
+  .section-label {
+    display: inline-block;
+    color: #e07b4c;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+  }
+  .section-title {
+    font-size: clamp(28px, 5vw, 40px);
+    font-weight: 700;
+    color: #2d1f14;
+    margin-bottom: 14px;
+  }
+  .section-subtitle {
+    font-size: 17px;
+    color: #8b7355;
+    max-width: 500px;
+    margin-bottom: 48px;
+  }
+  .text-center { text-align: center; }
+  .mx-auto { margin-left: auto; margin-right: auto; }
+
+  /* ===== Problem / Solution ===== */
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 48px;
+    align-items: center;
+  }
+  .chat-preview {
+    background: #fff;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.06);
+    border: 1px solid #f0e6d8;
+  }
+  .chat-bubble {
+    padding: 12px 16px;
+    border-radius: 16px;
+    margin-bottom: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    max-width: 85%;
+  }
+  .chat-bubble.bot {
+    background: #fdf5ed;
+    color: #5c3d2e;
+    border-top-left-radius: 4px;
+  }
+  .chat-bubble.user {
+    background: #e07b4c;
+    color: #fff;
+    margin-left: auto;
+    border-top-right-radius: 4px;
+  }
+  .chat-bubble .bubble-time {
+    font-size: 10px;
+    margin-top: 6px;
+    opacity: 0.5;
+  }
+
+  .text-col h3 {
+    font-size: 26px;
+    color: #2d1f14;
+    margin-bottom: 14px;
+  }
+  .text-col p {
+    color: #6b5d4f;
+    font-size: 15px;
+    line-height: 1.8;
+    margin-bottom: 8px;
+  }
+  .highlight-box {
+    margin-top: 20px;
+    padding: 16px 20px;
+    background: #fff5ec;
+    border-radius: 12px;
+    border-left: 4px solid #e07b4c;
+    font-size: 14px;
+    color: #5c3d2e;
+    line-height: 1.7;
+  }
+
+  /* ===== Categories ===== */
+  .categories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+  }
+  .cat-card {
+    background: #fff;
+    border: 1px solid #f0e6d8;
+    border-radius: 16px;
+    padding: 28px 24px;
+    text-align: center;
+    transition: all 0.25s;
+    cursor: default;
+  }
+  .cat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+    border-color: #e0d0b8;
+  }
+  .cat-icon {
+    font-size: 40px;
+    margin-bottom: 14px;
+  }
+  .cat-card h4 { font-size: 16px; color: #2d1f14; margin-bottom: 6px; }
+  .cat-card p { font-size: 13px; color: #8b7355; line-height: 1.5; }
+
+  /* ===== Recommendation Style ===== */
+  .rec-card {
+    background: #fff;
+    border: 1px solid #f0e6d8;
+    border-radius: 20px;
+    padding: 0;
+    overflow: hidden;
+    transition: all 0.25s;
+  }
+  .rec-card:hover {
+    box-shadow: 0 8px 30px rgba(0,0,0,0.06);
+  }
+  .rec-card .rec-image {
+    height: 200px;
+    background: linear-gradient(135deg, #fdf5ed, #fff0e0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 56px;
+  }
+  .rec-card .rec-body {
+    padding: 20px 24px;
+  }
+  .rec-card .rec-tag {
+    display: inline-block;
+    background: #fff5ec;
+    color: #e07b4c;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 8px;
+  }
+  .rec-card h4 { font-size: 17px; color: #2d1f14; margin-bottom: 6px; }
+  .rec-card blockquote {
+    font-size: 13px;
+    color: #8b7355;
+    line-height: 1.6;
+    font-style: italic;
+    border-left: 3px solid #f0e6d8;
+    padding-left: 12px;
+    margin-top: 8px;
+  }
+
+  /* ===== Steps ===== */
+  .steps-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    max-width: 640px;
+    margin: 0 auto;
+  }
+  .step {
+    display: flex;
+    gap: 20px;
+    padding: 28px 0;
+    position: relative;
+  }
+  .step:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    left: 21px;
+    top: 68px;
+    bottom: 0;
+    width: 2px;
+    background: #f0e6d8;
+  }
+  .step-num {
+    width: 44px; height: 44px;
+    min-width: 44px;
+    border-radius: 50%;
+    background: #fff5ec;
+    color: #e07b4c;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 20px;
+    position: relative;
+    z-index: 1;
+  }
+  .step-text h4 { font-size: 17px; color: #2d1f14; margin-bottom: 4px; }
+  .step-text p { font-size: 14px; color: #8b7355; }
+  .step-text .step-note {
+    margin-top: 10px;
+    padding: 10px 14px;
+    background: #fdfaf5;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #b8a590;
+    display: flex;
+    gap: 8px;
+  }
+
+  /* ===== Commands ===== */
+  .cmd-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 12px;
+  }
+  .cmd-item {
+    background: #fff;
+    border: 1px solid #f0e6d8;
+    border-radius: 12px;
+    padding: 16px 18px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    transition: all 0.2s;
+  }
+  .cmd-item:hover {
+    border-color: #e0d0b8;
+    background: #fdfaf5;
+  }
+  .cmd-item .cmd-name {
+    font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: #e07b4c;
+    background: #fff5ec;
+    padding: 3px 8px;
+    border-radius: 6px;
+    white-space: nowrap;
+    min-width: fit-content;
+  }
+  .cmd-item .cmd-desc { font-size: 13px; color: #6b5d4f; line-height: 1.5; }
+
+  /* ===== CTA ===== */
+  .cta-section {
+    text-align: center;
+    padding: 100px 0;
+  }
+  .cta-box {
+    background: linear-gradient(135deg, #fff5ec, #fff9f0);
+    border: 1px solid #f0e0c8;
+    border-radius: 24px;
+    padding: 56px 36px;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-box h2 { font-size: 32px; color: #2d1f14; margin-bottom: 10px; }
+  .cta-box p { font-size: 17px; color: #8b7355; margin-bottom: 28px; }
+
+  /* ===== FAQ ===== */
+  .faq-list { max-width: 680px; margin: 0 auto; }
+  .faq-item {
+    border-bottom: 1px solid #f0e6d8;
+    padding: 20px 0;
+    cursor: pointer;
+    user-select: none;
+  }
+  .faq-q {
+    font-size: 16px;
+    font-weight: 600;
+    color: #2d1f14;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .faq-q .arrow {
+    font-size: 11px;
+    color: #c4b393;
+    transition: transform 0.3s;
+  }
+  .faq-item.open .arrow { transform: rotate(180deg); }
+  .faq-a {
+    font-size: 14px;
+    color: #8b7355;
+    line-height: 1.7;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+  }
+  .faq-item.open .faq-a {
+    max-height: 280px;
+    padding-top: 10px;
+  }
+
+  /* ===== Footer ===== */
+  footer {
+    text-align: center;
+    padding: 48px 24px;
+    border-top: 1px solid #f0e6d8;
+    color: #c4b393;
+    font-size: 13px;
+  }
+  footer a { color: #b8a590; text-decoration: none; }
+  footer a:hover { color: #e07b4c; }
+
+  @media (max-width: 768px) {
+    .two-col { grid-template-columns: 1fr; }
+    .rec-card .rec-image { height: 160px; }
+    .cta-box h2 { font-size: 24px; }
+    section { padding: 60px 0; }
+    .btn { padding: 13px 24px; font-size: 15px; }
+    .cmd-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===== Hero ===== -->
+<header class="hero">
+  <div class="hero-bg-pattern"></div>
+  <div class="hero-badge">
+    <span class="emoji">👋</span> 中文 Telegram 机器人
+  </div>
+  <h1>
+    你好，我是 <span class="accent">KORA</span>
+  </h1>
+  <p class="hero-subtitle">
+    把你当成土生土长在中国的本地好友<br>
+    专懂那些藏起来的好地方
+  </p>
+  <p class="hero-note">
+    别的 AI 推的店可能两年前就倒闭了<br>
+    而我的资讯来自一线厨师、调酒师、设计师——全是城里懂潮流的人
+  </p>
+  <div class="hero-buttons">
+    <a href="https://t.me/Kora_china_bot" target="_blank" rel="noopener" class="btn btn-primary">
+      🤖 打开 Telegram 找我
+    </a>
+    <a href="#how" class="btn btn-outline">
+      📖 看看怎么用
+    </a>
+  </div>
+  <div class="hero-scroll">↓ 往下翻，看看我能帮你找什么</div>
+</header>
+
+<main class="container">
+
+  <!-- ===== Problem ===== -->
+  <section id="problem">
+    <div class="two-col">
+      <div class="chat-preview">
+        <div class="chat-bubble user">
+          成都有什么好吃的推荐？
+          <div class="bubble-time">10:32</div>
+        </div>
+        <div class="chat-bubble bot">
+          ChatGPT：推荐你去「小龙坎火锅」和「宽窄巷子小吃街」🍲
+          <div class="bubble-time">10:32</div>
+        </div>
+        <div class="chat-bubble user">
+          有没有靠谱的本地推荐？
+          <div class="bubble-time">10:33</div>
+        </div>
+        <div class="chat-bubble bot">
+          KORA：别去小龙坎了，排队两小时不值得。跟你说三个本地人真正会去的：<br><br>🍜 <b>巷巷面</b> — 藏在玉林老小区里，素椒杂酱面 12 块一碗，开了 18 年没上过点评<br>🍢 <b>老周烧烤</b> — 每晚 10 点出摊，烤脑花和五花肉是招牌，去晚了就没了<br>🍸 <b>Bar π</b> — 没有招牌的清吧，老板是上海回来的调酒师，桂花米酒特调一绝
+          <div class="bubble-time">10:33</div>
+        </div>
+      </div>
+
+      <div class="text-col">
+        <span class="section-label">为什么是 KORA</span>
+        <h3>别的 AI 给你过时数据<br>KORA 给你正在发生的</h3>
+        <p>
+          市面上的 AI 都靠过时数据库——推荐给你的餐厅可能几年前就关门了。
+          KORA 不一样：信息实时更新，来源是一线主厨、画廊主理人、地下音乐人，城里真正懂潮流的人。
+        </p>
+        <div class="highlight-box">
+          💡 <strong>KORA 的原则：</strong>每次只精选 2-3 个去处，每一个都附上真实的推荐理由。不会像搜索引擎那样甩给你十几条不相关的链接。
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Categories ===== -->
+  <section id="categories">
+    <div class="text-center" style="margin-bottom:48px">
+      <span class="section-label">我能帮你找什么</span>
+      <h2 class="section-title">🍜 本地人的私藏清单</h2>
+    </div>
+
+    <div class="categories-grid">
+      <div class="cat-card">
+        <div class="cat-icon">🍜</div>
+        <h4>本地老饕私藏美食</h4>
+        <p>从 30 元巷弄小面馆到值得跨城打卡的高端私厨</p>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon">🍸</div>
+        <h4>小众酒吧 & 夜生活</h4>
+        <p>隐秘地下清吧、露台酒馆、连门头招牌都没有的据点</p>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon">🎨</div>
+        <h4>展览 · 市集 · 快闪</h4>
+        <p>新开展的画廊、周末市集、限时快闪店一手情报</p>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon">🚶</div>
+        <h4>城市漫步 · 隐秘角落</h4>
+        <p>旅游大巴永远找不到的老街小巷，游客明信片之外的宝藏</p>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon">🗺</div>
+        <h4>出行攻略</h4>
+        <p>谷歌地图在中国根本不好用？KORA 教你本地人怎么导航</p>
+      </div>
+      <div class="cat-card">
+        <div class="cat-icon">🕒</div>
+        <h4>中国生活指南</h4>
+        <p>支付方式、网络工具、出行建议、点餐避坑——来中国旅行必备</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Recommendation Style ===== -->
+  <section id="rec-style" style="background:#faf8f5;">
+    <div class="text-center" style="margin-bottom:40px">
+      <span class="section-label">KORA 的推荐风格</span>
+      <h2 class="section-title">不堆数量，只给精品</h2>
+      <p class="section-subtitle mx-auto">每次 2-3 个去处 + 详细理由 = 你可以信任的选择</p>
+    </div>
+
+    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap:20px">
+      <div class="rec-card">
+        <div class="rec-image" style="background:linear-gradient(135deg, #fff5ec, #ffe8d6)">🍜</div>
+        <div class="rec-body">
+          <span class="rec-tag">成都 · 面馆</span>
+          <h4>巷巷面</h4>
+          <blockquote>"藏在玉林老小区里，素椒杂酱面 12 块一碗，开了 18 年没上过点评榜单，全靠街坊口口相传。"</blockquote>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-image" style="background:linear-gradient(135deg, #f0e6ff, #e8dcf8)">🍸</div>
+        <div class="rec-body">
+          <span class="rec-tag">上海 · 酒吧</span>
+          <h4>Bar π</h4>
+          <blockquote>"没有招牌的清吧，老板是东京回来的调酒师。桂花米酒特调只有秋天才有，熟客才知道要坐吧台角落那个位置。"</blockquote>
+        </div>
+      </div>
+      <div class="rec-card">
+        <div class="rec-image" style="background:linear-gradient(135deg, #e8f5e9, #d0e8d0)">🏛</div>
+        <div class="rec-body">
+          <span class="rec-tag">北京 · 展览</span>
+          <h4>789 艺术区地下展</h4>
+          <blockquote>"不是 798 主街上那些——往里走，红砖楼的负一层，独立画廊群展每两周换一次，策展人是中央美院的新锐。"</blockquote>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== How to Use ===== -->
+  <section id="how">
+    <div class="text-center" style="margin-bottom:48px">
+      <span class="section-label">上手指南</span>
+      <h2 class="section-title">4 步，5 分钟</h2>
+      <p class="section-subtitle mx-auto">从下载到开始探索你的城市</p>
+    </div>
+
+    <div class="steps-list">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-text">
+          <h4>下载 Telegram（电报）</h4>
+          <p>在手机应用商店搜索 "Telegram" 下载安装，用手机号注册。</p>
+          <div class="step-note">💡 iOS 用户需要海外 Apple ID；国内安卓用户可能需要从官网下载 APK。</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-text">
+          <h4>搜索 KORA 机器人</h4>
+          <p>Telegram 搜索栏输入 <strong>@Kora_china_bot</strong>，点击进入，按 <strong>/start</strong> 开始对话。</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-text">
+          <h4>告诉 KORA 你在哪</h4>
+          <p>直接说「我在上海，想找安静的小众酒吧」或者「下周去成都，推荐本地人才去的美食」——像跟朋友聊天一样。</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-text">
+          <h4>拿到推荐，出发探索 🚶</h4>
+          <p>KORA 会给你 2-3 个精选去处，每个都有推荐理由。去完之后告诉 KORA 你的感受，它会越推荐越懂你。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Commands ===== -->
+  <section id="commands">
+    <div class="text-center" style="margin-bottom:40px">
+      <span class="section-label">指令参考</span>
+      <h2 class="section-title">KORA 常用指令</h2>
+      <p class="section-subtitle mx-auto">掌握这些，用得更顺手</p>
+    </div>
+
+    <div style="margin-bottom:32px">
+      <h4 style="font-size:14px;color:#b8a590;margin-bottom:12px;font-weight:600;letter-spacing:1px">📋 会话管理</h4>
+      <div class="cmd-grid">
+        <div class="cmd-item">
+          <span class="cmd-name">/start</span>
+          <span class="cmd-desc">开始对话，KORA 会做自我介绍并问你位置</span>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-name">/new</span>
+          <span class="cmd-desc">创建新会话，开始一个全新话题</span>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-name">/reset</span>
+          <span class="cmd-desc">重置当前会话</span>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-name">/stop</span>
+          <span class="cmd-desc">终止当前会话</span>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-name">/compact</span>
+          <span class="cmd-desc">精简输出内容</span>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-name">/help</span>
+          <span class="cmd-desc">查看全部可用指令</span>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-bottom:32px">
+      <h4 style="font-size:14px;color:#b8a590;margin-bottom:12px;font-weight:600;letter-spacing:1px">⚙️ 参数 & 设置</h4>
+      <div class="cmd-grid">
+        <div class="cmd-item">
+          <span class="cmd-name">/model</span>
+          <span class="cmd-desc">查看或切换 AI 模型</span>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-name">/fast</span>
+          <span class="cmd-desc">切换快速响应模式（开启/关闭）</span>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-name">/think [等级]</span>
+          <span class="cmd-desc">设置推理深度等级</span>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-name">/verbose</span>
+          <span class="cmd-desc">详细输出模式（开启/关闭/完整）</span>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-name">/status</span>
+          <span class="cmd-desc">查看当前会话状态</span>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-name">/whoami</span>
+          <span class="cmd-desc">查看当前用户身份信息</span>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <h4 style="font-size:14px;color:#b8a590;margin-bottom:12px;font-weight:600;letter-spacing:1px">🔧 工具调用</h4>
+      <div class="cmd-grid">
+        <div class="cmd-item">
+          <span class="cmd-name">/skill &lt;工具名&gt;</span>
+          <span class="cmd-desc">调用内置工具：画布、爬虫、图表生成、表情包制作、节点调试等</span>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-name">/tools</span>
+          <span class="cmd-desc">查看全部可用工具列表</span>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-name">/commands</span>
+          <span class="cmd-desc">查看完整指令清单（共 8 页）</span>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-name">/tasks</span>
+          <span class="cmd-desc">查看当前任务列表</span>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-name">/context</span>
+          <span class="cmd-desc">查看当前对话上下文</span>
+        </div>
+        <div class="cmd-item">
+          <span class="cmd-name">/trace</span>
+          <span class="cmd-desc">开关插件运行日志追踪</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== CTA ===== -->
+  <div class="cta-section">
+    <div class="cta-box">
+      <h2>准备好发现你城市的另一面了吗？</h2>
+      <p>打开 Telegram，搜索 @Kora_china_bot<br>就像有一个本地朋友，随时告诉你去哪、吃什么、怎么玩</p>
+      <a href="https://t.me/Kora_china_bot" target="_blank" rel="noopener" class="btn btn-primary" style="font-size:18px;padding:18px 40px">
+        🤖 在 Telegram 打开 KORA
+      </a>
+      <p style="margin-top:20px;font-size:13px;color:#b8a590">完全免费 · 中文对话 · 实时更新</p>
+    </div>
+  </div>
+
+  <!-- ===== FAQ ===== -->
+  <section id="faq">
+    <div class="text-center" style="margin-bottom:40px">
+      <span class="section-label">常见问题</span>
+      <h2 class="section-title">FAQ</h2>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item open" onclick="toggleFAQ(this)">
+        <div class="faq-q"><span>KORA 和 ChatGPT、DeepSeek 有什么不同？</span><span class="arrow">▼</span></div>
+        <div class="faq-a">最大的区别是数据来源。ChatGPT 等工具的训练数据可能已经过时，推荐给你的餐厅可能几年前就关门了。KORA 的信息来自一线本地的圈内人——主厨、调酒师、策展人、设计师——他们提供的是实时、亲身实测的推荐，而不是从数据库里扒出来的陈旧内容。</div>
+      </div>
+      <div class="faq-item" onclick="toggleFAQ(this)">
+        <div class="faq-q"><span>KORA 收费吗？</span><span class="arrow">▼</span></div>
+        <div class="faq-a">目前完全免费。直接在 Telegram 搜索 @Kora_china_bot 就能用，不需要任何付费。</div>
+      </div>
+      <div class="faq-item" onclick="toggleFAQ(this)">
+        <div class="faq-q"><span>支持哪些城市？</span><span class="arrow">▼</span></div>
+        <div class="faq-a">KORA 覆盖中国主要城市——北京、上海、广州、深圳、成都、杭州、重庆、西安、长沙等。你直接告诉 KORA 你在哪座城市，它就能给你推荐。</div>
+      </div>
+      <div class="faq-item" onclick="toggleFAQ(this)">
+        <div class="faq-q"><span>推荐会不会是广告？</span><span class="arrow">▼</span></div>
+        <div class="faq-a">不会。KORA 的推荐来自真实的本地圈内人网络，所有推荐都是基于亲身体验和口碑，没有付费推广。这也是为什么 KORA 每次只推荐 2-3 个地方——因为好的推荐是需要筛选的。</div>
+      </div>
+      <div class="faq-item" onclick="toggleFAQ(this)">
+        <div class="faq-q"><span>我只能问吃的吗？</span><span class="arrow">▼</span></div>
+        <div class="faq-a">不限于美食！KORA 可以推荐酒吧、展览、市集、快闪店、城市漫步路线、出行攻略，甚至中国生活小技巧（支付、网络、点餐避坑等）。你可以把 KORA 当成一个什么都懂一点的本地朋友。</div>
+      </div>
+      <div class="faq-item" onclick="toggleFAQ(this)">
+        <div class="faq-q"><span>在中国大陆能用 Telegram 吗？</span><span class="arrow">▼</span></div>
+        <div class="faq-a">Telegram 在中国大陆需要科学上网才能使用。如果你已经在用其他工具访问外网，那就能正常使用 KORA。如果你的网络环境不支持，可能需要先解决这个问题。</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <p>本页面为 KORA 中文社区介绍页，由社区成员使用 AI 工具制作。</p>
+  <p style="margin-top:8px">
+    <a href="https://t.me/Kora_china_bot" target="_blank" rel="noopener">Telegram 机器人</a>
+  </p>
+  <p style="margin-top:6px;font-size:11px;color:#d4c8b8">KORA 是独立项目，本页面不构成商业推广。</p>
+</footer>
+
+<script>
+function toggleFAQ(item) {
+  item.classList.toggle('open');
+}
+
+// Smooth scroll
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', function(e) {
+    const href = this.getAttribute('href');
+    if (href === '#') return;
+    const target = document.querySelector(href);
+    if (target) {
+      e.preventDefault();
+      target.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
+});
+
+// Scroll reveal
+const obs = new IntersectionObserver((entries) => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      e.target.style.opacity = '1';
+      e.target.style.transform = 'translateY(0)';
+    }
+  });
+}, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+
+document.querySelectorAll('.cat-card, .rec-card, .step, .cmd-item').forEach(el => {
+  el.style.opacity = '0';
+  el.style.transform = 'translateY(24px)';
+  el.style.transition = 'all 0.5s ease-out';
+  obs.observe(el);
+});
+</script>
+
+</body>
+</html>
